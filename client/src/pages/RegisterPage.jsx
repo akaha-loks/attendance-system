@@ -4,9 +4,13 @@ import { Link } from 'react-router-dom';
 
 import API from '../api/axios';
 
-function LoginPage() {
+function RegisterPage() {
 
-  const [email, setEmail] = useState('');
+  const [name, setName] =
+    useState('');
+
+  const [email, setEmail] =
+    useState('');
 
   const [password, setPassword] =
     useState('');
@@ -23,6 +27,13 @@ function LoginPage() {
   const validateForm = () => {
 
     const newErrors = {};
+
+    if (!name.trim()) {
+
+      newErrors.name =
+        'Введите имя';
+
+    }
 
     if (!email.trim()) {
 
@@ -48,18 +59,25 @@ function LoginPage() {
       newErrors.password =
         'Введите пароль';
 
+    } else if (password.length < 6) {
+
+      newErrors.password =
+        'Минимум 6 символов';
+
     }
 
     setErrors(newErrors);
 
-    return Object.keys(newErrors).length === 0;
+    return (
+      Object.keys(newErrors).length === 0
+    );
 
   };
 
 
-  // LOGIN
+  // REGISTER
 
-  const handleLogin = async (e) => {
+  const handleRegister = async (e) => {
 
     e.preventDefault();
 
@@ -69,26 +87,16 @@ function LoginPage() {
 
       setLoading(true);
 
-      const { data } = await API.post(
-        '/auth/login',
+      await API.post(
+        '/auth/register',
         {
+          name,
           email,
           password
         }
       );
 
-      localStorage.setItem(
-        'token',
-        data.token
-      );
-
-      localStorage.setItem(
-        'user',
-        JSON.stringify(data.user)
-      );
-
-      window.location.href =
-        '/dashboard';
+      window.location.href = '/';
 
     } catch (error) {
 
@@ -96,10 +104,27 @@ function LoginPage() {
         error.response?.data
       );
 
-      setErrors({
-        server:
-          'Неверный email или пароль'
-      });
+      const message =
+        error.response?.data?.message;
+
+      if (
+        message ===
+        'User already exists'
+      ) {
+
+        setErrors({
+          server:
+            'Пользователь уже существует'
+        });
+
+      } else {
+
+        setErrors({
+          server:
+            'Ошибка регистрации'
+        });
+
+      }
 
     } finally {
 
@@ -117,13 +142,42 @@ function LoginPage() {
       <div className="login-card">
 
         <h1>
-          Вход
+          Регистрация
         </h1>
 
         <form
-          onSubmit={handleLogin}
+          onSubmit={handleRegister}
           className="login-form"
         >
+
+          <div className="form-group">
+
+            <input
+              type="text"
+              placeholder="Имя"
+              value={name}
+              onChange={(e) => {
+
+                setName(e.target.value);
+
+                setErrors((prev) => ({
+                  ...prev,
+                  name: '',
+                  server: ''
+                }));
+
+              }}
+            />
+
+            {
+              errors.name && (
+                <span className="error-text">
+                  {errors.name}
+                </span>
+              )
+            }
+
+          </div>
 
           <div className="form-group">
 
@@ -190,8 +244,8 @@ function LoginPage() {
 
             {
               loading
-                ? 'Вход...'
-                : 'Войти'
+                ? 'Регистрация...'
+                : 'Зарегистрироваться'
             }
 
           </button>
@@ -210,12 +264,12 @@ function LoginPage() {
 
         <p>
 
-          Нет аккаунта?
+          Уже есть аккаунт?
 
           {' '}
 
-          <Link to="/register">
-            Зарегистрироваться
+          <Link to="/">
+            Войти
           </Link>
 
         </p>
@@ -228,4 +282,4 @@ function LoginPage() {
 
 }
 
-export default LoginPage;
+export default RegisterPage;

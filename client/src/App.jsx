@@ -10,6 +10,7 @@ import GroupsPage from './pages/GroupsPage';
 import StudentsPage from './pages/StudentsPage';
 import AttendancePage from './pages/AttendancePage';
 import ProtectedRoute from './routes/ProtectedRoute';
+import RegisterPage from './pages/RegisterPage';
 
 function App() {
 
@@ -62,6 +63,11 @@ function App() {
 
             </ProtectedRoute>
           }
+        />
+
+        <Route
+          path="/register"
+          element={<RegisterPage />}
         />
 
       </Routes>
