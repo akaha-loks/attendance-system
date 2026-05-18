@@ -1,5 +1,3 @@
-/* RESET */
-
 * {
   margin: 0;
   padding: 0;
@@ -83,8 +81,6 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
 }
 
-/* NAVBAR */
-
 .navbar {
   height: 64px;
 
@@ -149,15 +145,11 @@ select:focus {
   background: #f3f4f6;
 }
 
-/* LAYOUT */
-
 .layout {
   display: flex;
 
   min-height: calc(100vh - 64px);
 }
-
-/* SIDEBAR */
 
 .sidebar {
   width: 240px;
@@ -205,15 +197,11 @@ select:focus {
   color: var(--primary);
 }
 
-/* CONTENT */
-
 .content {
   flex: 1;
 
   padding: 28px;
 }
-
-/* PAGE HEADINGS */
 
 .page-title {
   font-size: 32px;
@@ -233,8 +221,6 @@ select:focus {
   margin-bottom: 28px;
 }
 
-/* CARDS */
-
 .card {
   background: var(--card);
 
@@ -244,8 +230,6 @@ select:focus {
 
   padding: 22px;
 }
-
-/* TABLE */
 
 .table-card {
   background: white;
@@ -289,8 +273,6 @@ select:focus {
   background: #fafafa;
 }
 
-/* BADGES */
-
 .badge {
   display: inline-flex;
 
@@ -332,9 +314,6 @@ select:focus {
 
   color: #475569;
 }
-
-/* MODAL */
-
 .modal-overlay {
   position: fixed;
 
@@ -408,8 +387,6 @@ select:focus {
 
   color: white;
 }
-
-/* RESPONSIVE */
 
 @media (max-width: 900px) {
   .layout {

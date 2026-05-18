@@ -1,58 +1,35 @@
-const Student = require('../models/Student');
-
-
-// CREATE STUDENT
+const Student = require("../models/Student");
 
 const createStudent = async (req, res) => {
-
   try {
+    const { fullName, email, group } = req.body;
 
-    const {
-      fullName,
-      email,
-      group
-    } = req.body;
-
-    const existingStudent =
-      await Student.findOne({ email });
+    const existingStudent = await Student.findOne({ email });
 
     if (existingStudent) {
-
       return res.status(400).json({
-        message: 'Student already exists'
+        message: "Student already exists",
       });
-
     }
 
     const student = await Student.create({
-
       fullName,
 
       email,
 
-      group
-
+      group,
     });
 
     res.status(201).json(student);
-
   } catch (error) {
-
     res.status(500).json({
-      message: error.message
+      message: error.message,
     });
-
   }
-
 };
 
-
-// GET STUDENTS
-
 const getStudents = async (req, res) => {
-
   try {
-
     const filter = {};
 
     if (req.query.group) {
@@ -61,69 +38,38 @@ const getStudents = async (req, res) => {
 
     const students = await Student.find(filter)
 
-      .populate('group', 'name')
+      .populate("group", "name")
 
       .sort({ createdAt: -1 });
 
     res.json(students);
-
   } catch (error) {
-
     res.status(500).json({
-      message: error.message
+      message: error.message,
     });
-
   }
-
 };
 
-
-// UPDATE STUDENT
-
 const updateStudent = async (req, res) => {
-
   try {
+    const { fullName, email, group } = req.body;
 
-    const {
-      fullName,
-      email,
-      group
-    } = req.body;
-
-    const student =
-      await Student.findById(req.params.id);
+    const student = await Student.findById(req.params.id);
 
     if (!student) {
-
       return res.status(404).json({
-        message: 'Student not found'
+        message: "Student not found",
       });
-
     }
+    L;
 
+    const existingStudent = await Student.findOne({ email });
 
-    // CHECK DUPLICATE EMAIL
-
-    const existingStudent =
-      await Student.findOne({ email });
-
-    if (
-
-      existingStudent &&
-
-      existingStudent._id.toString() !==
-      req.params.id
-
-    ) {
-
+    if (existingStudent && existingStudent._id.toString() !== req.params.id) {
       return res.status(400).json({
-        message: 'Student already exists'
+        message: "Student already exists",
       });
-
     }
-
-
-    // UPDATE
 
     student.fullName = fullName;
 
@@ -134,60 +80,41 @@ const updateStudent = async (req, res) => {
     await student.save();
 
     res.json(student);
-
   } catch (error) {
-
     res.status(500).json({
-      message: error.message
+      message: error.message,
     });
-
   }
-
 };
 
-
-// DELETE STUDENT
-
 const deleteStudent = async (req, res) => {
-
   try {
-
-    const student =
-      await Student.findById(req.params.id);
+    const student = await Student.findById(req.params.id);
 
     if (!student) {
-
       return res.status(404).json({
-        message: 'Student not found'
+        message: "Student not found",
       });
-
     }
 
     await student.deleteOne();
 
     res.json({
-      message: 'Student deleted'
+      message: "Student deleted",
     });
-
   } catch (error) {
-
     res.status(500).json({
-      message: error.message
+      message: error.message,
     });
-
   }
-
 };
 
-
 module.exports = {
-
   createStudent,
 
   getStudents,
 
   updateStudent,
 
-  deleteStudent
-
+  deleteStudent,
 };

@@ -1,46 +1,21 @@
-const express = require('express');
+const express = require("express");
 
 const router = express.Router();
 
-const protect =
-  require('../middleware/authMiddleware');
+const protect = require("../middleware/authMiddleware");
 
 const {
-
   saveAttendance,
 
   getAttendance,
 
-  getStudentReport
+  getStudentReport,
+} = require("../controllers/attendanceController");
 
-} = require('../controllers/attendanceController');
+router.post("/", protect, saveAttendance);
 
+router.get("/", protect, getAttendance);
 
-// SAVE
-
-router.post(
-  '/',
-  protect,
-  saveAttendance
-);
-
-
-// GET DAILY
-
-router.get(
-  '/',
-  protect,
-  getAttendance
-);
-
-
-// STUDENT REPORT
-
-router.get(
-  '/student-report',
-  protect,
-  getStudentReport
-);
-
+router.get("/student-report", protect, getStudentReport);
 
 module.exports = router;

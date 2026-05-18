@@ -1,57 +1,25 @@
-const express = require('express');
+const express = require("express");
 
 const router = express.Router();
 
-const protect =
-  require('../middleware/authMiddleware');
+const protect = require("../middleware/authMiddleware");
 
 const {
-
   createGroup,
 
   getGroups,
 
   updateGroup,
 
-  deleteGroup
+  deleteGroup,
+} = require("../controllers/groupController");
 
-} = require('../controllers/groupController');
+router.post("/", protect, createGroup);
 
+router.get("/", protect, getGroups);
 
-// CREATE GROUP
+router.put("/:id", protect, updateGroup);
 
-router.post(
-  '/',
-  protect,
-  createGroup
-);
-
-
-// GET GROUPS
-
-router.get(
-  '/',
-  protect,
-  getGroups
-);
-
-
-// UPDATE GROUP
-
-router.put(
-  '/:id',
-  protect,
-  updateGroup
-);
-
-
-// DELETE GROUP
-
-router.delete(
-  '/:id',
-  protect,
-  deleteGroup
-);
-
+router.delete("/:id", protect, deleteGroup);
 
 module.exports = router;

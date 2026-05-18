@@ -1,151 +1,102 @@
-const mongoose = require('mongoose');
-const Attendance = require('../models/Attendance');
+const mongoose = require("mongoose");
+const Attendance = require("../models/Attendance");
 
-const saveAttendance = async (req,res) => {
+const saveAttendance = async (req, res) => {
+  try {
+    const { student, group, date, status } = req.body;
 
-try{
+    const existingAttendance = await Attendance.findOne({
+      student,
+      group,
+      date,
+    });
 
-const {
-student,
-group,
-date,
-status
-} = req.body;
+    if (existingAttendance) {
+      existingAttendance.status = status;
 
-const existingAttendance =
-await Attendance.findOne({
-student,
-group,
-date
-});
+      await existingAttendance.save();
 
-if(existingAttendance){
+      return res.json(existingAttendance);
+    }
 
-existingAttendance.status = status;
+    const attendance = await Attendance.create({
+      student: new mongoose.Types.ObjectId(student),
 
-await existingAttendance.save();
+      group: new mongoose.Types.ObjectId(group),
 
-return res.json(existingAttendance);
+      date,
 
-}
+      status,
+    });
 
-const attendance =
-await Attendance.create({
-
-student:new mongoose.Types.ObjectId(student),
-
-group:new mongoose.Types.ObjectId(group),
-
-date,
-
-status
-
-});
-
-res.status(201).json(attendance);
-
-}catch(error){
-
-res.status(500).json({
-message:error.message
-});
-
-}
-
+    res.status(201).json(attendance);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
 };
 
-const getAttendance = async (req,res) => {
+const getAttendance = async (req, res) => {
+  try {
+    const filter = {};
 
-try{
+    if (req.query.group) {
+      filter.group = req.query.group;
+    }
 
-const filter = {};
+    if (req.query.date) {
+      filter.date = req.query.date;
+    }
 
-if(req.query.group){
-filter.group = req.query.group;
-}
+    const attendance = await Attendance.find(filter)
+      .populate("student", "fullName email")
+      .populate("group", "name")
+      .sort({ createdAt: -1 });
 
-if(req.query.date){
-filter.date = req.query.date;
-}
-
-const attendance =
-await Attendance.find(filter)
-.populate(
-'student',
-'fullName email'
-)
-.populate(
-'group',
-'name'
-)
-.sort({createdAt:-1});
-
-res.json(attendance);
-
-}catch(error){
-
-res.status(500).json({
-message:error.message
-});
-
-}
-
+    res.json(attendance);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
 };
 
-const getStudentReport = async (req,res) => {
+const getStudentReport = async (req, res) => {
+  try {
+    const { student, from, to } = req.query;
 
-try{
+    const filter = {};
 
-const {
-student,
-from,
-to
-} = req.query;
+    if (student) {
+      filter.student = student;
+    }
 
-const filter = {};
+    if (from && to) {
+      filter.date = {
+        $gte: from,
+        $lte: to,
+      };
+    }
 
-if(student){
-filter.student = student;
-}
+    const attendance = await Attendance.find(filter)
 
-if(from && to){
+      .populate("student", "fullName email")
 
-filter.date = {
-$gte:from,
-$lte:to
-};
+      .populate("group", "name")
 
-}
+      .sort({ date: 1 });
 
-const attendance =
-await Attendance.find(filter)
-
-.populate(
-'student',
-'fullName email'
-)
-
-.populate(
-'group',
-'name'
-)
-
-.sort({date:1});
-
-res.json(attendance);
-
-}catch(error){
-
-res.status(500).json({
-message:error.message
-});
-
-}
-
+    res.json(attendance);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
 };
 
 module.exports = {
-saveAttendance,
-getAttendance,
-getStudentReport
+  saveAttendance,
+  getAttendance,
+  getStudentReport,
 };

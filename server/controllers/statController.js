@@ -1,5 +1,3 @@
-// statController.js
-
 const Student = require("../models/Student");
 const Group = require("../models/Group");
 const Attendance = require("../models/Attendance");
