@@ -8,6 +8,8 @@ import ConfirmModal from "../components/ConfirmModal";
 
 import toast from "react-hot-toast";
 
+import "../styles/students.css";
+
 function StudentsPage() {
   const [students, setStudents] = useState([]);
 
@@ -23,21 +25,13 @@ function StudentsPage() {
 
   const [search, setSearch] = useState("");
 
-  // EDIT MODE
-
   const [editId, setEditId] = useState(null);
 
-  // VALIDATION ERRORS
-
   const [errors, setErrors] = useState({});
-
-  // MODAL
 
   const [showModal, setShowModal] = useState(false);
 
   const [selectedStudentId, setSelectedStudentId] = useState(null);
-
-  // GET GROUPS
 
   const fetchGroups = async () => {
     try {
@@ -48,8 +42,6 @@ function StudentsPage() {
       console.log(error);
     }
   };
-
-  // GET STUDENTS
 
   const fetchStudents = async () => {
     try {
@@ -67,41 +59,15 @@ function StudentsPage() {
     }
   };
 
-  // VALIDATION
-
   const validateForm = () => {
     const newErrors = {};
 
     if (!fullName.trim()) {
       newErrors.fullName = "Введите ФИО студента";
-    } else {
-      const nameRegex = /^[A-Za-zА-Яа-яЁё\s-]+$/;
-
-      if (!nameRegex.test(fullName)) {
-        newErrors.fullName = "ФИО должно содержать только буквы";
-      } else {
-        const words = fullName.trim().split(/\s+/);
-
-        if (words.length < 2) {
-          newErrors.fullName = "Введите имя и фамилию";
-        } else {
-          const invalidWord = words.some((word) => word.length < 2);
-
-          if (invalidWord) {
-            newErrors.fullName = "Слишком короткое имя или фамилия";
-          }
-        }
-      }
     }
 
     if (!email.trim()) {
       newErrors.email = "Введите email";
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-      if (!emailRegex.test(email)) {
-        newErrors.email = "Неверный формат email";
-      }
     }
 
     if (!group) {
@@ -112,8 +78,6 @@ function StudentsPage() {
 
     return Object.keys(newErrors).length === 0;
   };
-
-  // CREATE / UPDATE STUDENT
 
   const handleCreateStudent = async (e) => {
     e.preventDefault();
@@ -134,9 +98,7 @@ function StudentsPage() {
       } else {
         await API.post("/students", {
           fullName,
-
           email,
-
           group,
         });
       }
@@ -155,13 +117,9 @@ function StudentsPage() {
 
       toast.success(editId ? "Студент обновлён" : "Студент создан");
     } catch (error) {
-      console.log(error.response?.data);
-
       const message = error.response?.data?.message;
 
       if (message === "Student already exists") {
-        toast.error("Ошибка операции");
-
         setErrors({
           server: "Студент с таким email уже существует",
         });
@@ -175,8 +133,6 @@ function StudentsPage() {
     }
   };
 
-  // DELETE STUDENT
-
   const handleDeleteStudent = async (id) => {
     try {
       await API.delete(`/students/${id}`);
@@ -184,101 +140,127 @@ function StudentsPage() {
       fetchStudents();
 
       toast.success("Студент удалён");
-
-      fetchStudents();
     } catch (error) {
       console.log(error);
     }
   };
 
   useEffect(() => {
-    const loadGroups = async () => {
-      await fetchGroups();
-    };
-
-    loadGroups();
+    fetchGroups();
   }, []);
 
   useEffect(() => {
-    const loadStudents = async () => {
-      await fetchStudents();
-    };
-
-    loadStudents();
+    fetchStudents();
   }, [filterGroup]);
 
-  // FILTERED STUDENTS
-
   const filteredStudents = students.filter((student) => {
-    const searchValue = search.toLowerCase();
+    const value = search.toLowerCase();
 
     return (
-      student.fullName.toLowerCase().includes(searchValue) ||
-      student.email.toLowerCase().includes(searchValue)
+      student.fullName.toLowerCase().includes(value) ||
+      student.email.toLowerCase().includes(value)
     );
   });
 
   return (
     <Layout>
-      <h1>Студенты</h1>
+      <div className="students-page">
+        <div className="students-header">
+          <h1 className="students-title">Студенты</h1>
 
-      <br />
+          <p className="students-subtitle">Управление студентами и группами</p>
+        </div>
 
-      <form onSubmit={handleCreateStudent} className="student-form">
-        <div className="form-group">
+        <div className="student-form-card">
+          <form onSubmit={handleCreateStudent} className="student-form">
+            <div className="form-group">
+              <input
+                type="text"
+                placeholder="Полное имя"
+                value={fullName}
+                onChange={(e) => {
+                  setFullName(e.target.value);
+
+                  setErrors((prev) => ({
+                    ...prev,
+                    fullName: "",
+                    server: "",
+                  }));
+                }}
+              />
+
+              {errors.fullName && (
+                <span className="error-text">{errors.fullName}</span>
+              )}
+            </div>
+
+            <div className="form-group">
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+
+                  setErrors((prev) => ({
+                    ...prev,
+                    email: "",
+                    server: "",
+                  }));
+                }}
+              />
+
+              {errors.email && (
+                <span className="error-text">{errors.email}</span>
+              )}
+            </div>
+
+            <div className="form-group">
+              <select
+                value={group}
+                onChange={(e) => {
+                  setGroup(e.target.value);
+
+                  setErrors((prev) => ({
+                    ...prev,
+                    group: "",
+                    server: "",
+                  }));
+                }}
+              >
+                <option value="">Выберите группу</option>
+
+                {groups.map((group) => (
+                  <option key={group._id} value={group._id}>
+                    {group.name}
+                  </option>
+                ))}
+              </select>
+
+              {errors.group && (
+                <span className="error-text">{errors.group}</span>
+              )}
+            </div>
+
+            <button type="submit">{editId ? "Сохранить" : "Создать"}</button>
+          </form>
+
+          {errors.server && <p className="server-error">{errors.server}</p>}
+        </div>
+
+        <div className="students-toolbar">
           <input
             type="text"
-            placeholder="Полное имя"
-            value={fullName}
-            onChange={(e) => {
-              setFullName(e.target.value);
-
-              setErrors((prev) => ({
-                ...prev,
-                fullName: "",
-                server: "",
-              }));
-            }}
+            placeholder="Поиск по имени или email"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
 
-          {errors.fullName && (
-            <span className="error-text">{errors.fullName}</span>
-          )}
-        </div>
-
-        <div className="form-group">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-
-              setErrors((prev) => ({
-                ...prev,
-                email: "",
-                server: "",
-              }));
-            }}
-          />
-
-          {errors.email && <span className="error-text">{errors.email}</span>}
-        </div>
-
-        <div className="form-group">
           <select
-            value={group}
-            onChange={(e) => {
-              setGroup(e.target.value);
-
-              setErrors((prev) => ({
-                ...prev,
-                group: "",
-                server: "",
-              }));
-            }}
+            value={filterGroup}
+            onChange={(e) => setFilterGroup(e.target.value)}
           >
-            <option value="">Выбрать группу</option>
+            <option value="">Все группы</option>
 
             {groups.map((group) => (
               <option key={group._id} value={group._id}>
@@ -286,89 +268,54 @@ function StudentsPage() {
               </option>
             ))}
           </select>
-
-          {errors.group && <span className="error-text">{errors.group}</span>}
         </div>
 
-        <button type="submit">
-          {editId ? "Сохранить" : "Создать студента"}
-        </button>
-      </form>
+        {filteredStudents.length === 0 ? (
+          <div className="empty-students">Студенты не найдены</div>
+        ) : (
+          <div className="students-grid">
+            {filteredStudents.map((student) => (
+              <div key={student._id} className="student-card">
+                <div className="student-info">
+                  <div className="student-name">{student.fullName}</div>
 
-      {errors.server && <p className="server-error">{errors.server}</p>}
+                  <div className="student-email">{student.email}</div>
 
-      <br />
+                  <div className="student-group">{student.group?.name}</div>
+                </div>
 
-      <input
-        type="text"
-        placeholder="Поиск по имени или email"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+                <div className="student-actions">
+                  <button
+                    className="edit-btn"
+                    onClick={() => {
+                      setFullName(student.fullName);
 
-      <br />
-      <br />
+                      setEmail(student.email);
 
-      <select
-        value={filterGroup}
-        onChange={(e) => setFilterGroup(e.target.value)}
-      >
-        <option value="">Все группы</option>
+                      setGroup(student.group?._id);
 
-        {groups.map((group) => (
-          <option key={group._id} value={group._id}>
-            {group.name}
-          </option>
-        ))}
-      </select>
+                      setEditId(student._id);
+                    }}
+                  >
+                    Редактировать
+                  </button>
 
-      <br />
-      <br />
+                  <button
+                    className="delete-btn"
+                    onClick={() => {
+                      setSelectedStudentId(student._id);
 
-      {filteredStudents.length === 0 && <p>Студенты не найдены</p>}
-
-      {filteredStudents.map((student) => (
-        <div key={student._id} className="card">
-          <div>
-            <h3>{student.fullName}</h3>
-
-            <p>{student.email}</p>
-
-            <p>Группа: {student.group?.name}</p>
+                      setShowModal(true);
+                    }}
+                  >
+                    Удалить
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-            }}
-          >
-            <button
-              onClick={() => {
-                setFullName(student.fullName);
-
-                setEmail(student.email);
-
-                setGroup(student.group?._id);
-
-                setEditId(student._id);
-              }}
-            >
-              Редактировать
-            </button>
-
-            <button
-              onClick={() => {
-                setSelectedStudentId(student._id);
-
-                setShowModal(true);
-              }}
-            >
-              Удалить
-            </button>
-          </div>
-        </div>
-      ))}
+        )}
+      </div>
 
       <ConfirmModal
         isOpen={showModal}

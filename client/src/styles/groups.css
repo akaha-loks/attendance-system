@@ -1,0 +1,163 @@
+.groups-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.groups-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.groups-title {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.groups-subtitle {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.group-form-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.group-form {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.group-input-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.group-form input {
+  width: 100%;
+}
+
+.group-form button {
+  height: 42px;
+  padding: 0 22px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+}
+
+.group-form button:hover {
+  opacity: 0.92;
+}
+
+.error-text {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.server-error {
+  color: var(--danger);
+  font-size: 14px;
+}
+
+.groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.group-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transition: 0.2s ease;
+}
+
+.group-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.group-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.group-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.group-description {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.group-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.edit-btn,
+.delete-btn {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.edit-btn {
+  background: #eff6ff;
+  color: var(--primary);
+}
+
+.edit-btn:hover {
+  background: #dbeafe;
+}
+
+.delete-btn {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.delete-btn:hover {
+  background: #ffe4e6;
+}
+
+.empty-groups {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  color: var(--muted);
+}
+
+@media (max-width: 700px) {
+  .group-form {
+    flex-direction: column;
+  }
+
+  .group-form button {
+    width: 100%;
+  }
+
+  .groups-title {
+    font-size: 28px;
+  }
+}

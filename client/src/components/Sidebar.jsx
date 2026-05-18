@@ -1,8 +1,10 @@
 import { NavLink } from "react-router-dom";
 
+import "../styles/sidebar.css";
+
 function Sidebar() {
   return (
-    <div className="sidebar">
+    <aside className="sidebar">
       <NavLink
         to="/dashboard"
         className={({ isActive }) =>
@@ -38,7 +40,7 @@ function Sidebar() {
       >
         Посещаемость
       </NavLink>
-    </div>
+    </aside>
   );
 }
 

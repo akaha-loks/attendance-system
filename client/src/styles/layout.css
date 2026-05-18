@@ -1,0 +1,22 @@
+.layout-shell {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.layout-body {
+  display: flex;
+}
+
+.page-content {
+  flex: 1;
+  padding: 32px;
+  margin-left: 260px;
+  margin-top: 78px;
+}
+
+@media (max-width: 900px) {
+  .page-content {
+    margin-left: 0;
+    padding: 20px;
+  }
+}

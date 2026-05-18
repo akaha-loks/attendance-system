@@ -1,18 +1,17 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import LoginPage from "./pages/LoginPage";
+import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import GroupsPage from "./pages/GroupsPage";
 import StudentsPage from "./pages/StudentsPage";
 import AttendancePage from "./pages/AttendancePage";
 import ProtectedRoute from "./routes/ProtectedRoute";
-import RegisterPage from "./pages/RegisterPage";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LoginPage />} />
+        <Route path="/" element={<AuthPage />} />
 
         <Route
           path="/dashboard"
@@ -49,8 +48,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-        <Route path="/register" element={<RegisterPage />} />
       </Routes>
     </BrowserRouter>
   );

@@ -97,7 +97,9 @@ function DashboardPage() {
   if (!stats) {
     return (
       <Layout>
-        <h1>Загрузка...</h1>
+        <div className="dashboard-page">
+          <h1>Загрузка...</h1>
+        </div>
       </Layout>
     );
   }
@@ -130,254 +132,300 @@ function DashboardPage() {
 
   return (
     <Layout>
-      <h1>Панель управления</h1>
+      <div className="dashboard-page">
+        <div className="dashboard-header">
+          <h1 className="dashboard-title">Панель управления</h1>
 
-      <br />
+          <p className="dashboard-subtitle">Добро пожаловать, {user?.name}</p>
+        </div>
 
-      <h2>Добро пожаловать, {user?.name}</h2>
+        <div className="dashboard-filters">
+          <select value={period} onChange={(e) => setPeriod(e.target.value)}>
+            <option value="today">Сегодня</option>
 
-      <br />
-      <br />
+            <option value="week">Неделя</option>
 
-      <div className="dashboard-filters">
-        <select value={period} onChange={(e) => setPeriod(e.target.value)}>
-          <option value="today">Сегодня</option>
+            <option value="month">Месяц</option>
+          </select>
 
-          <option value="week">Неделя</option>
+          <select
+            value={selectedGroup}
+            onChange={(e) => {
+              setSelectedGroup(e.target.value);
 
-          <option value="month">Месяц</option>
-        </select>
+              setSelectedStudent("");
+            }}
+          >
+            <option value="">Все группы</option>
 
-        <select
-          value={selectedGroup}
-          onChange={(e) => {
-            setSelectedGroup(e.target.value);
+            {groups.map((group) => (
+              <option key={group._id} value={group._id}>
+                {group.name}
+              </option>
+            ))}
+          </select>
 
-            setSelectedStudent("");
-          }}
-        >
-          <option value="">Все группы</option>
+          <select
+            value={selectedStudent}
+            onChange={(e) => setSelectedStudent(e.target.value)}
+          >
+            <option value="">Все студенты</option>
 
-          {groups.map((group) => (
-            <option key={group._id} value={group._id}>
-              {group.name}
-            </option>
-          ))}
-        </select>
+            {students.map((student) => (
+              <option key={student._id} value={student._id}>
+                {student.fullName}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <select
-          value={selectedStudent}
-          onChange={(e) => setSelectedStudent(e.target.value)}
-        >
-          <option value="">Все студенты</option>
+        <div className="stats-grid">
+          {stats.mode === "student" ? (
+            <div className="stat-card">
+              <div className="student-info">
+                <div className="student-name">{stats.studentName}</div>
 
-          {students.map((student) => (
-            <option key={student._id} value={student._id}>
-              {student.fullName}
-            </option>
-          ))}
-        </select>
-      </div>
+                <div className="student-email">{stats.studentEmail}</div>
 
-      <br />
+                <div className="student-group">{stats.groupName}</div>
+              </div>
+            </div>
+          ) : (
+            <div className="stat-card">
+              <div className="stat-value">{stats.totalAttendance}</div>
 
-      <div className="stats-grid">
-        {stats.mode === "student" ? (
+              <div className="stat-label">Всего посещений</div>
+            </div>
+          )}
+
+          {stats.mode !== "student" && (
+            <div className="stat-card">
+              <div className="stat-value">{stats.totalStudents}</div>
+
+              <div className="stat-label">Студентов</div>
+            </div>
+          )}
+
+          {stats.mode === "global" && (
+            <div className="stat-card">
+              <div className="stat-value">{stats.totalGroups}</div>
+
+              <div className="stat-label">Групп</div>
+            </div>
+          )}
+
+          {stats.mode === "student" && period === "today" ? (
+            <div className="stat-card">
+              {stats.presentCount > 0 ? (
+                <div className="stat-row">
+                  <div className="stat-dot success"></div>
+
+                  <div>
+                    <div className="stat-value">Присутствовал</div>
+
+                    <div className="stat-label">Сегодня</div>
+                  </div>
+                </div>
+              ) : stats.absentCount > 0 ? (
+                <div className="stat-row">
+                  <div className="stat-dot danger"></div>
+
+                  <div>
+                    <div className="stat-value">Отсутствовал</div>
+
+                    <div className="stat-label">Сегодня</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="stat-row">
+                  <div className="stat-dot neutral"></div>
+
+                  <div>
+                    <div className="stat-value">Не отмечен</div>
+
+                    <div className="stat-label">Сегодня</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="stat-card">
+                <div className="stat-row">
+                  <div className="stat-dot success"></div>
+
+                  <div>
+                    <div className="stat-value">{stats.presentCount}</div>
+
+                    <div className="stat-label">Присутствовали</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="stat-card">
+                <div className="stat-row">
+                  <div className="stat-dot danger"></div>
+
+                  <div>
+                    <div className="stat-value">{stats.absentCount}</div>
+
+                    <div className="stat-label">Отсутствовали</div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
           <div className="stat-card">
-            <h3>{stats.studentName}</h3>
+            <div className="stat-value">{stats.attendancePercentage}%</div>
 
-            <p>{stats.studentEmail}</p>
-
-            <p>{stats.groupName}</p>
+            <div className="stat-label">Посещаемость</div>
           </div>
-        ) : (
-          <div className="stat-card">
-            <h2>{stats.totalAttendance}</h2>
+        </div>
 
-            <p>Всего посещений</p>
+        <div className="charts-grid">
+          <div className="chart-card">
+            <div className="chart-title">Статистика</div>
+
+            <ResponsiveContainer width="100%" height={320}>
+              <PieChart>
+                <Pie data={pieData} dataKey="value" outerRadius={110} label>
+                  <Cell fill="#22c55e" />
+
+                  <Cell fill="#ef4444" />
+                </Pie>
+
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="chart-card">
+            <div className="chart-title">Посещаемость</div>
+
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={barData}>
+                <CartesianGrid strokeDasharray="3 3" />
+
+                <XAxis dataKey="name" />
+
+                <YAxis domain={[0, 100]} />
+
+                <Tooltip />
+
+                <Bar
+                  dataKey="percentage"
+                  fill="#2563eb"
+                  radius={[8, 8, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {stats.mode === "student" && (
+          <div className="chart-card">
+            <div className="chart-title">История посещаемости</div>
+
+            <ResponsiveContainer width="100%" height={320}>
+              <LineChart data={lineData}>
+                <CartesianGrid strokeDasharray="3 3" />
+
+                <XAxis dataKey="date" />
+
+                <YAxis domain={[0, 100]} />
+
+                <Tooltip />
+
+                <Line
+                  type="monotone"
+                  dataKey="status"
+                  stroke="#2563eb"
+                  strokeWidth={3}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         )}
 
         {stats.mode !== "student" && (
-          <div className="stat-card">
-            <h2>{stats.totalStudents}</h2>
-
-            <p>Студентов</p>
-          </div>
-        )}
-
-        {stats.mode === "global" && (
-          <div className="stat-card">
-            <h2>{stats.totalGroups}</h2>
-
-            <p>Групп</p>
-          </div>
-        )}
-
-        {stats.mode === "student" && period === "today" ? (
-          <div className="stat-card">
-            <h2>
-              {stats.presentCount > 0
-                ? "🟢 Присутствовал сегодня"
-                : stats.absentCount > 0
-                  ? "🔴 Отсутствовал сегодня"
-                  : "⚪ Не отмечен"}
-            </h2>
-          </div>
-        ) : (
-          <>
-            <div className="stat-card">
-              <h2>🟢 {stats.presentCount}</h2>
-
-              <p>Присутствовали</p>
-            </div>
-
-            <div className="stat-card">
-              <h2>🔴 {stats.absentCount}</h2>
-
-              <p>Отсутствовали</p>
-            </div>
-          </>
-        )}
-
-        <div className="stat-card">
-          <h2>{stats.attendancePercentage}%</h2>
-
-          <p>Посещаемость</p>
-        </div>
-      </div>
-
-      <br />
-
-      <div className="charts-container">
-        <div className="chart-box">
-          <h2>Статистика</h2>
-
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie data={pieData} dataKey="value" outerRadius={100} label>
-                <Cell fill="#22c55e" />
-
-                <Cell fill="#ef4444" />
-              </Pie>
-
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="chart-box">
-          <h2>Посещаемость</h2>
-
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={barData}>
-              <CartesianGrid strokeDasharray="3 3" />
-
-              <XAxis dataKey="name" />
-
-              <YAxis domain={[0, 100]} />
-
-              <Tooltip />
-
-              <Bar dataKey="percentage" fill="#3b82f6" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <br />
-
-      {stats.mode === "student" && (
-        <div className="chart-box">
-          <h2>История посещаемости</h2>
-
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={lineData}>
-              <CartesianGrid strokeDasharray="3 3" />
-
-              <XAxis dataKey="date" />
-
-              <YAxis domain={[0, 100]} />
-
-              <Tooltip />
-
-              <Line type="monotone" dataKey="status" stroke="#3b82f6" />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {stats.mode !== "student" && (
-        <>
           <div className="dashboard-table">
-            <h2>
-              {period === "today"
-                ? "Отсутствуют сегодня"
-                : period === "week"
-                  ? "Топ пропусков за неделю"
-                  : "Топ пропусков за месяц"}
-            </h2>
+            <div className="dashboard-table-header">
+              <div className="dashboard-table-title">
+                {period === "today"
+                  ? "Отсутствуют сегодня"
+                  : period === "week"
+                    ? "Топ пропусков за неделю"
+                    : "Топ пропусков за месяц"}
+              </div>
+            </div>
 
-            <br />
-
-            {stats.topAbsentStudents.length === 0 && <p>Нет данных</p>}
+            {stats.topAbsentStudents.length === 0 && (
+              <div className="dashboard-row">Нет данных</div>
+            )}
 
             {stats.topAbsentStudents.map((student) => (
               <div key={student.fullName} className="dashboard-row">
-                <div>
+                <div className="dashboard-user">
                   <strong>{student.fullName}</strong>
                 </div>
 
-                <div>
-                  <span className="danger-text">🔴 {student.absentCount}</span>
+                <div className="dashboard-badge danger">
+                  <div className="dashboard-badge-dot"></div>
+
+                  {student.absentCount}
                 </div>
               </div>
             ))}
           </div>
+        )}
 
-          {stats.mode === "global" && (
-            <>
-              <br />
+        {stats.mode === "global" && (
+          <div className="dashboard-table">
+            <div className="dashboard-table-header">
+              <div className="dashboard-table-title">Группы</div>
+            </div>
 
-              <div className="dashboard-table">
-                <h2>Группы</h2>
+            {stats.groupStats.map((group) => (
+              <div key={group.groupName} className="dashboard-row">
+                <div className="dashboard-user">
+                  <strong>{group.groupName}</strong>
+                </div>
 
-                <br />
-
-                {stats.groupStats.map((group) => (
-                  <div key={group.groupName} className="dashboard-row">
-                    <div>
-                      <strong>{group.groupName}</strong>
-                    </div>
-
-                    <div className="group-stats">
-                      <span>Всего: {group.studentsCount}</span>
-
-                      {group.presentCount > 0 && (
-                        <span className="success-text">
-                          🟢 {group.presentCount}
-                        </span>
-                      )}
-
-                      {group.absentCount > 0 && (
-                        <span className="danger-text">
-                          🔴 {group.absentCount}
-                        </span>
-                      )}
-
-                      {group.unmarkedCount > 0 && (
-                        <span className="neutral-text">
-                          ⚪ {group.unmarkedCount}
-                        </span>
-                      )}
-                    </div>
+                <div className="group-stats">
+                  <div className="dashboard-badge neutral">
+                    Всего: {group.studentsCount}
                   </div>
-                ))}
+
+                  {group.presentCount > 0 && (
+                    <div className="dashboard-badge success">
+                      <div className="dashboard-badge-dot"></div>
+
+                      {group.presentCount}
+                    </div>
+                  )}
+
+                  {group.absentCount > 0 && (
+                    <div className="dashboard-badge danger">
+                      <div className="dashboard-badge-dot"></div>
+
+                      {group.absentCount}
+                    </div>
+                  )}
+
+                  {group.unmarkedCount > 0 && (
+                    <div className="dashboard-badge neutral">
+                      <div className="dashboard-badge-dot"></div>
+
+                      {group.unmarkedCount}
+                    </div>
+                  )}
+                </div>
               </div>
-            </>
-          )}
-        </>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </Layout>
   );
 }

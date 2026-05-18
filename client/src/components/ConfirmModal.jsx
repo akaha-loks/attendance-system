@@ -1,3 +1,5 @@
+import "../styles/modal.css";
+
 function ConfirmModal({
   isOpen,
 
@@ -14,9 +16,9 @@ function ConfirmModal({
   return (
     <div className="modal-overlay">
       <div className="modal">
-        <h2>{title}</h2>
+        <div className="modal-title">{title}</div>
 
-        <p>{message}</p>
+        <div className="modal-message">{message}</div>
 
         <div className="modal-buttons">
           <button className="cancel-btn" onClick={onCancel}>

@@ -1,0 +1,172 @@
+.students-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.students-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.students-title {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.students-subtitle {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.student-form-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.student-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.student-form button {
+  height: 42px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+}
+
+.student-form button:hover {
+  opacity: 0.92;
+}
+
+.students-toolbar {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.students-toolbar input {
+  min-width: 260px;
+}
+
+.students-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 18px;
+}
+
+.student-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  transition: 0.2s ease;
+}
+
+.student-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.student-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.student-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.student-email {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.student-group {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.student-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.edit-btn,
+.delete-btn {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.edit-btn {
+  background: #eff6ff;
+  color: var(--primary);
+}
+
+.edit-btn:hover {
+  background: #dbeafe;
+}
+
+.delete-btn {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.delete-btn:hover {
+  background: #ffe4e6;
+}
+
+.empty-students {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.error-text {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.server-error {
+  color: var(--danger);
+  font-size: 14px;
+}
+
+@media (max-width: 700px) {
+  .students-title {
+    font-size: 28px;
+  }
+}

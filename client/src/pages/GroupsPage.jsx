@@ -6,26 +6,20 @@ import Layout from "../components/Layout";
 
 import ConfirmModal from "../components/ConfirmModal";
 
+import "../styles/groups.css";
+
 function GroupsPage() {
   const [groups, setGroups] = useState([]);
 
   const [name, setName] = useState("");
 
-  // EDIT MODE
-
   const [editId, setEditId] = useState(null);
 
-  // VALIDATION ERRORS
-
   const [errors, setErrors] = useState({});
-
-  // MODAL
 
   const [showModal, setShowModal] = useState(false);
 
   const [selectedGroupId, setSelectedGroupId] = useState(null);
-
-  // GET GROUPS
 
   const fetchGroups = async () => {
     try {
@@ -36,8 +30,6 @@ function GroupsPage() {
       console.log(error);
     }
   };
-
-  // VALIDATION
 
   const validateForm = () => {
     const newErrors = {};
@@ -53,8 +45,6 @@ function GroupsPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // CREATE / UPDATE GROUP
-
   const handleCreateGroup = async (e) => {
     e.preventDefault();
 
@@ -68,9 +58,7 @@ function GroupsPage() {
           { name },
         );
       } else {
-        await API.post("/groups", {
-          name,
-        });
+        await API.post("/groups", { name });
       }
 
       setName("");
@@ -81,8 +69,6 @@ function GroupsPage() {
 
       fetchGroups();
     } catch (error) {
-      console.log(error.response?.data);
-
       const message = error.response?.data?.message;
 
       if (message === "Group already exists") {
@@ -99,8 +85,6 @@ function GroupsPage() {
     }
   };
 
-  // DELETE GROUP
-
   const handleDeleteGroup = async (id) => {
     try {
       await API.delete(`/groups/${id}`);
@@ -111,77 +95,90 @@ function GroupsPage() {
     }
   };
 
-  // LOAD GROUPS
-
   useEffect(() => {
     fetchGroups();
   }, []);
 
   return (
     <Layout>
-      <h1>Группы</h1>
+      <div className="groups-page">
+        <div className="groups-header">
+          <h1 className="groups-title">Группы</h1>
 
-      <br />
-
-      <form onSubmit={handleCreateGroup} className="student-form">
-        <div className="form-group">
-          <input
-            type="text"
-            placeholder="Название группы"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-
-              setErrors((prev) => ({
-                ...prev,
-                name: "",
-                server: "",
-              }));
-            }}
-          />
-
-          {errors.name && <span className="error-text">{errors.name}</span>}
+          <p className="groups-subtitle">Управление учебными группами</p>
         </div>
 
-        <button type="submit">{editId ? "Сохранить" : "Создать группу"}</button>
-      </form>
+        <div className="group-form-card">
+          <form onSubmit={handleCreateGroup} className="group-form">
+            <div className="group-input-wrapper">
+              <input
+                type="text"
+                placeholder="Название группы"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
 
-      {errors.server && <p className="server-error">{errors.server}</p>}
+                  setErrors((prev) => ({
+                    ...prev,
+                    name: "",
+                    server: "",
+                  }));
+                }}
+              />
 
-      <br />
+              {errors.name && <span className="error-text">{errors.name}</span>}
 
-      {groups.map((group) => (
-        <div key={group._id} className="card">
-          <h3>{group.name}</h3>
+              {errors.server && (
+                <span className="server-error">{errors.server}</span>
+              )}
+            </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-            }}
-          >
-            <button
-              onClick={() => {
-                setName(group.name);
-
-                setEditId(group._id);
-              }}
-            >
-              Редактировать
+            <button type="submit">
+              {editId ? "Сохранить" : "Создать группу"}
             </button>
+          </form>
+        </div>
 
-            <button
-              onClick={() => {
-                setSelectedGroupId(group._id);
+        {groups.length === 0 ? (
+          <div className="empty-groups">Группы пока отсутствуют</div>
+        ) : (
+          <div className="groups-grid">
+            {groups.map((group) => (
+              <div key={group._id} className="group-card">
+                <div className="group-card-header">
+                  <div className="group-name">{group.name}</div>
 
-                setShowModal(true);
-              }}
-            >
-              Удалить
-            </button>
+                  <div className="group-description">Учебная группа</div>
+                </div>
+
+                <div className="group-actions">
+                  <button
+                    className="edit-btn"
+                    onClick={() => {
+                      setName(group.name);
+
+                      setEditId(group._id);
+                    }}
+                  >
+                    Редактировать
+                  </button>
+
+                  <button
+                    className="delete-btn"
+                    onClick={() => {
+                      setSelectedGroupId(group._id);
+
+                      setShowModal(true);
+                    }}
+                  >
+                    Удалить
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-      ))}
+        )}
+      </div>
 
       <ConfirmModal
         isOpen={showModal}

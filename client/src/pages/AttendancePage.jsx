@@ -6,6 +6,8 @@ import API from "../api/axios";
 
 import Layout from "../components/Layout";
 
+import "../styles/attendance.css";
+
 function AttendancePage() {
   const [groups, setGroups] = useState([]);
 
@@ -97,7 +99,6 @@ function AttendancePage() {
     try {
       setAttendanceData((prev) => ({
         ...prev,
-
         [studentId]: status,
       }));
 
@@ -146,10 +147,14 @@ function AttendancePage() {
             ? "Присутствует"
             : "Не отмечен";
 
-      csvRows.push([student.fullName, student.email, status, date]);
+      const formattedDate = ` ${new Date(date)
+        .toLocaleDateString("ru-RU")
+        .replace(/\./g, "-")}`;
+
+      csvRows.push([student.fullName, student.email, status, formattedDate]);
     });
 
-    const csvContent = csvRows.map((row) => row.join("; ")).join("\n");
+    const csvContent = csvRows.map((row) => row.join(";")).join("\n");
 
     const blob = new Blob(["\uFEFF" + csvContent], {
       type: "text/csv;charset=utf-8;",
@@ -163,6 +168,7 @@ function AttendancePage() {
 
     link.setAttribute(
       "download",
+
       `attendance-${selectedGroupData?.name || "group"}-${date}.csv`,
     );
 
@@ -183,14 +189,18 @@ function AttendancePage() {
     const csvRows = [["Дата", "Статус"]];
 
     reportData.forEach((item) => {
+      const formattedDate = ` ${new Date(item.date)
+        .toLocaleDateString("ru-RU")
+        .replace(/\./g, "-")}`;
+
       csvRows.push([
-        item.date,
+        formattedDate,
 
         item.status === "absent" ? "Отсутствует" : "Присутствует",
       ]);
     });
 
-    const csvContent = csvRows.map((row) => row.join("; ")).join("\n");
+    const csvContent = csvRows.map((row) => row.join(";")).join("\n");
 
     const blob = new Blob(["\uFEFF" + csvContent], {
       type: "text/csv;charset=utf-8;",
@@ -204,6 +214,7 @@ function AttendancePage() {
 
     link.setAttribute(
       "download",
+
       `student-report-${studentData?.fullName || "student"}.csv`,
     );
 
@@ -227,11 +238,11 @@ function AttendancePage() {
   }, [selectedGroup, date]);
 
   const filteredStudents = students.filter((student) => {
-    const searchValue = search.toLowerCase();
+    const value = search.toLowerCase();
 
     return (
-      student.fullName.toLowerCase().includes(searchValue) ||
-      student.email.toLowerCase().includes(searchValue)
+      student.fullName.toLowerCase().includes(value) ||
+      student.email.toLowerCase().includes(value)
     );
   });
 
@@ -243,173 +254,200 @@ function AttendancePage() {
     (student) => attendanceData[student._id] === "absent",
   ).length;
 
+  const unmarkedCount = students.length - presentCount - absentCount;
+
   return (
     <Layout>
-      <h1>Посещаемость</h1>
+      <div className="attendance-page">
+        <div className="attendance-header">
+          <h1 className="attendance-title">Посещаемость</h1>
 
-      <br />
+          <p className="attendance-subtitle">
+            Управление посещаемостью студентов
+          </p>
+        </div>
 
-      <div className="attendance-controls">
-        <select
-          value={selectedGroup}
-          onChange={(e) => {
-            setAttendanceData({});
+        <div className="attendance-toolbar">
+          <select
+            value={selectedGroup}
+            onChange={(e) => {
+              setAttendanceData({});
 
-            setSelectedGroup(e.target.value);
-          }}
-        >
-          <option value="">Выберите группу</option>
+              setSelectedGroup(e.target.value);
+            }}
+          >
+            <option value="">Выберите группу</option>
 
-          {groups.map((group) => (
-            <option key={group._id} value={group._id}>
-              {group.name}
-            </option>
-          ))}
-        </select>
+            {groups.map((group) => (
+              <option key={group._id} value={group._id}>
+                {group.name}
+              </option>
+            ))}
+          </select>
 
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => {
-            setAttendanceData({});
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => {
+              setAttendanceData({});
 
-            setDate(e.target.value);
-          }}
-        />
-      </div>
+              setDate(e.target.value);
+            }}
+          />
 
-      <br />
+          <input
+            type="text"
+            placeholder="Поиск"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
 
-      <input
-        type="text"
-        placeholder="Поиск по имени или email"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+        <div className="attendance-summary">
+          <div className="summary-card">
+            <div className="summary-label">Присутствуют</div>
 
-      <br />
-      <br />
-
-      <div className="attendance-summary">
-        <div className="summary-present">🟢 Присутствуют: {presentCount}</div>
-
-        <div className="summary-absent">🔴 Отсутствуют: {absentCount}</div>
-      </div>
-
-      <br />
-
-      <button onClick={exportAttendanceReport}>Скачать отчёт CSV</button>
-
-      <br />
-      <br />
-
-      <h2>Отчёт по студенту</h2>
-
-      <br />
-
-      <div className="attendance-controls">
-        <select
-          value={reportStudent}
-          onChange={(e) => setReportStudent(e.target.value)}
-        >
-          <option value="">Выберите студента</option>
-
-          {students.map((student) => (
-            <option key={student._id} value={student._id}>
-              {student.fullName}
-            </option>
-          ))}
-        </select>
-
-        <input
-          type="date"
-          value={reportFrom}
-          onChange={(e) => setReportFrom(e.target.value)}
-        />
-
-        <input
-          type="date"
-          value={reportTo}
-          onChange={(e) => setReportTo(e.target.value)}
-        />
-
-        <button onClick={loadStudentReport}>Загрузить</button>
-      </div>
-
-      <br />
-
-      {reportData.length > 0 && (
-        <>
-          <button onClick={exportStudentReport}>Скачать CSV студента</button>
-
-          <br />
-          <br />
-
-          {reportData.map((item) => (
-            <div key={item._id} className="card">
-              <div>
-                <h3>{item.student?.fullName}</h3>
-
-                <p>{item.date}</p>
-              </div>
-
-              <div
-                className={`attendance-status ${
-                  item.status === "absent" ? "absent" : "present"
-                }`}
-              >
-                {item.status === "absent"
-                  ? "🔴 Отсутствует"
-                  : "🟢 Присутствует"}
-              </div>
-            </div>
-          ))}
-        </>
-      )}
-
-      <br />
-      <br />
-
-      {students.length === 0 && selectedGroup && <p>В группе нет студентов</p>}
-
-      {filteredStudents.length === 0 && students.length > 0 && (
-        <p>Студенты не найдены</p>
-      )}
-
-      {reportData.length === 0 &&
-        filteredStudents.map((student) => (
-          <div key={student._id} className="card">
-            <div>
-              <h3>{student.fullName}</h3>
-
-              <p>{student.email}</p>
-            </div>
-
-            <div
-              className={`attendance-status ${
-                attendanceData[student._id] === "absent"
-                  ? "absent"
-                  : attendanceData[student._id] === "present"
-                    ? "present"
-                    : ""
-              }`}
-              onClick={() => {
-                const currentStatus = attendanceData[student._id];
-
-                const newStatus =
-                  currentStatus === "present" ? "absent" : "present";
-
-                handleStatusChange(student._id, newStatus);
-              }}
-            >
-              {attendanceData[student._id] === "absent"
-                ? "🔴 Отсутствует"
-                : attendanceData[student._id] === "present"
-                  ? "🟢 Присутствует"
-                  : "⚪ Не отмечен"}
-            </div>
+            <div className="summary-value present">{presentCount}</div>
           </div>
-        ))}
+
+          <div className="summary-card">
+            <div className="summary-label">Отсутствуют</div>
+
+            <div className="summary-value absent">{absentCount}</div>
+          </div>
+
+          <div className="summary-card">
+            <div className="summary-label">Не отмечены</div>
+
+            <div className="summary-value unmarked">{unmarkedCount}</div>
+          </div>
+        </div>
+
+        <div className="attendance-actions">
+          <button className="export-btn" onClick={exportAttendanceReport}>
+            Скачать CSV
+          </button>
+        </div>
+
+        <div className="report-card">
+          <div className="report-title">Отчёт по студенту</div>
+
+          <div className="report-toolbar">
+            <select
+              value={reportStudent}
+              onChange={(e) => setReportStudent(e.target.value)}
+            >
+              <option value="">Выберите студента</option>
+
+              {students.map((student) => (
+                <option key={student._id} value={student._id}>
+                  {student.fullName}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="date"
+              value={reportFrom}
+              onChange={(e) => setReportFrom(e.target.value)}
+            />
+
+            <input
+              type="date"
+              value={reportTo}
+              onChange={(e) => setReportTo(e.target.value)}
+            />
+
+            <button className="export-btn" onClick={loadStudentReport}>
+              Загрузить
+            </button>
+          </div>
+
+          {reportData.length > 0 && (
+            <>
+              <button className="export-btn" onClick={exportStudentReport}>
+                Скачать CSV студента
+              </button>
+
+              <div className="report-list">
+                {reportData.map((item) => (
+                  <div key={item._id} className="report-item">
+                    <div className="report-info">
+                      <strong>{item.student?.fullName}</strong>
+
+                      <div className="report-date">
+                        {new Date(item.date)
+                          .toLocaleDateString("ru-RU")
+                          .replace(/\./g, "-")}
+                      </div>
+                    </div>
+
+                    <div
+                      className={`attendance-status ${
+                        item.status === "absent" ? "absent" : "present"
+                      }`}
+                    >
+                      {item.status === "absent"
+                        ? "Отсутствовал"
+                        : "Присутствовал"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {students.length === 0 && selectedGroup && (
+          <div className="empty-state">В группе нет студентов</div>
+        )}
+
+        {filteredStudents.length === 0 && students.length > 0 && (
+          <div className="empty-state">Студенты не найдены</div>
+        )}
+
+        {reportData.length === 0 && (
+          <div className="attendance-grid">
+            {filteredStudents.map((student) => (
+              <div key={student._id} className="attendance-card">
+                <div className="attendance-student">
+                  <div className="attendance-student-name">
+                    {student.fullName}
+                  </div>
+
+                  <div className="attendance-student-email">
+                    {student.email}
+                  </div>
+                </div>
+
+                <div
+                  className={`attendance-status ${
+                    attendanceData[student._id] === "absent"
+                      ? "absent"
+                      : attendanceData[student._id] === "present"
+                        ? "present"
+                        : "unmarked"
+                  }`}
+                  onClick={() => {
+                    const currentStatus = attendanceData[student._id];
+
+                    const newStatus =
+                      currentStatus === "present" ? "absent" : "present";
+
+                    handleStatusChange(student._id, newStatus);
+                  }}
+                >
+                  {attendanceData[student._id] === "absent"
+                    ? "Отсутствует"
+                    : attendanceData[student._id] === "present"
+                      ? "Присутствует"
+                      : "Не отмечен"}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </Layout>
   );
 }
