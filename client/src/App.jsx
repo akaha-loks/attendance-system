@@ -1,29 +1,18 @@
-import {
-  BrowserRouter,
-  Routes,
-  Route
-} from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
-import GroupsPage from './pages/GroupsPage';
-import StudentsPage from './pages/StudentsPage';
-import AttendancePage from './pages/AttendancePage';
-import ProtectedRoute from './routes/ProtectedRoute';
-import RegisterPage from './pages/RegisterPage';
+import LoginPage from "./pages/LoginPage";
+import DashboardPage from "./pages/DashboardPage";
+import GroupsPage from "./pages/GroupsPage";
+import StudentsPage from "./pages/StudentsPage";
+import AttendancePage from "./pages/AttendancePage";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import RegisterPage from "./pages/RegisterPage";
 
 function App() {
-
   return (
-
     <BrowserRouter>
-
       <Routes>
-
-        <Route
-          path="/"
-          element={<LoginPage />}
-        />
+        <Route path="/" element={<LoginPage />} />
 
         <Route
           path="/dashboard"
@@ -47,9 +36,7 @@ function App() {
           path="/students"
           element={
             <ProtectedRoute>
-
               <StudentsPage />
-
             </ProtectedRoute>
           }
         />
@@ -58,24 +45,15 @@ function App() {
           path="/attendance"
           element={
             <ProtectedRoute>
-
               <AttendancePage />
-
             </ProtectedRoute>
           }
         />
 
-        <Route
-          path="/register"
-          element={<RegisterPage />}
-        />
-
+        <Route path="/register" element={<RegisterPage />} />
       </Routes>
-
     </BrowserRouter>
-
   );
-
 }
 
 export default App;

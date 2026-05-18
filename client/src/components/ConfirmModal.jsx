@@ -1,5 +1,4 @@
 function ConfirmModal({
-
   isOpen,
 
   title,
@@ -8,50 +7,29 @@ function ConfirmModal({
 
   onConfirm,
 
-  onCancel
-
+  onCancel,
 }) {
-
   if (!isOpen) return null;
 
   return (
-
     <div className="modal-overlay">
-
       <div className="modal">
+        <h2>{title}</h2>
 
-        <h2>
-          {title}
-        </h2>
-
-        <p>
-          {message}
-        </p>
+        <p>{message}</p>
 
         <div className="modal-buttons">
-
-          <button
-            className="cancel-btn"
-            onClick={onCancel}
-          >
+          <button className="cancel-btn" onClick={onCancel}>
             Отмена
           </button>
 
-          <button
-            className="confirm-btn"
-            onClick={onConfirm}
-          >
+          <button className="confirm-btn" onClick={onConfirm}>
             Подтвердить
           </button>
-
         </div>
-
       </div>
-
     </div>
-
   );
-
 }
 
 export default ConfirmModal;

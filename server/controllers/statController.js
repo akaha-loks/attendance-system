@@ -1,305 +1,376 @@
-const Student = require('../models/Student');
-const Group = require('../models/Group');
-const Attendance = require('../models/Attendance');
-const mongoose = require('mongoose');
+// statController.js
 
-const getStats = async (req,res) => {
+const Student = require("../models/Student");
+const Group = require("../models/Group");
+const Attendance = require("../models/Attendance");
+const mongoose = require("mongoose");
 
-try{
+const formatDate = (date) => {
+  const year = date.getFullYear();
 
-const {
-period,
-group,
-student
-} = req.query;
+  const month = String(date.getMonth() + 1).padStart(2, "0");
 
-const today = new Date();
+  const day = String(date.getDate()).padStart(2, "0");
 
-let fromDate = null;
-
-if(period === 'today'){
-
-fromDate = new Date(
-today.getFullYear(),
-today.getMonth(),
-today.getDate()
-);
-
-}
-
-if(period === 'week'){
-
-fromDate = new Date();
-
-fromDate.setDate(
-today.getDate() - 7
-);
-
-}
-
-if(period === 'month'){
-
-fromDate = new Date();
-
-fromDate.setMonth(
-today.getMonth() - 1
-);
-
-}
-
-const attendanceFilter = {};
-
-if(
-group &&
-group !== 'all'
-){
-attendanceFilter.group = group;
-}
-
-if(
-student &&
-student !== 'all'
-){
-attendanceFilter.student = student;
-}
-
-if(fromDate){
-
-attendanceFilter.date = {
-$gte:
-fromDate
-.toISOString()
-.split('T')[0]
+  return `${year}-${month}-${day}`;
 };
 
-}
+const getDateFilter = (period) => {
+  const today = new Date();
 
-const totalStudents =
-group && group !== 'all'
-? await Student.countDocuments({
-group
-})
-: await Student.countDocuments();
+  if (period === "today") {
+    return formatDate(today);
+  }
 
-const totalGroups =
-await Group.countDocuments();
+  if (period === "week") {
+    const weekAgo = new Date();
 
-const totalAttendance =
-await Attendance.countDocuments(
-attendanceFilter
-);
+    weekAgo.setDate(today.getDate() - 7);
 
-const presentCount =
-await Attendance.countDocuments({
-...attendanceFilter,
-status:'present'
-});
+    return {
+      $gte: formatDate(weekAgo),
+    };
+  }
 
-const absentCount =
-await Attendance.countDocuments({
-...attendanceFilter,
-status:'absent'
-});
+  if (period === "month") {
+    const monthAgo = new Date();
 
-const todayString =
-new Date()
-.toISOString()
-.split('T')[0];
+    monthAgo.setMonth(today.getMonth() - 1);
 
-const todayPresent =
-await Attendance.countDocuments({
-...attendanceFilter,
-date:todayString,
-status:'present'
-});
+    return {
+      $gte: formatDate(monthAgo),
+    };
+  }
 
-const todayAbsent =
-await Attendance.countDocuments({
-...attendanceFilter,
-date:todayString,
-status:'absent'
-});
-
-let attendancePercentage = 0;
-
-if(totalAttendance > 0){
-
-attendancePercentage =
-Math.round(
-(presentCount / totalAttendance) * 100
-);
-
-}
-
-const groups =
-await Group.find();
-
-const groupStats =
-await Promise.all(
-
-groups.map(async(item)=>{
-
-const studentsCount =
-await Student.countDocuments({
-group:item._id
-});
-
-const absentToday =
-await Attendance.countDocuments({
-group:item._id,
-date:todayString,
-status:'absent'
-});
-
-return{
-groupName:item.name,
-studentsCount,
-absentToday
+  return {};
 };
 
-})
+const getGlobalStats = async (req, res) => {
+  try {
+    const period = req.query.period || "today";
 
-);
+    const dateFilter = getDateFilter(period);
 
-let topAbsentStudents = [];
+    const attendanceFilter = {};
 
-if(period === 'today'){
+    if (period) {
+      attendanceFilter.date = dateFilter;
+    }
 
-const todayAbsentData =
-await Attendance.find({
+    const totalStudents = await Student.countDocuments();
 
-status:'absent',
+    const totalGroups = await Group.countDocuments();
 
-date:todayString,
+    const totalAttendance = await Attendance.countDocuments(attendanceFilter);
 
-...(group &&
-group !== 'all'
-&& {
-group:new mongoose.Types.ObjectId(group)
-})
+    const presentCount = await Attendance.countDocuments({
+      ...attendanceFilter,
 
-})
-.populate(
-'student',
-'fullName'
-);
+      status: "present",
+    });
 
-topAbsentStudents =
-todayAbsentData.map((item)=>({
+    const absentCount = await Attendance.countDocuments({
+      ...attendanceFilter,
 
-fullName:
-item.student?.fullName,
+      status: "absent",
+    });
 
-absentCount:1
+    let attendancePercentage = 0;
 
-}));
+    if (totalAttendance > 0) {
+      attendancePercentage = Math.round((presentCount / totalAttendance) * 100);
+    }
 
-}else{
+    const todayString = formatDate(new Date());
 
-const topStudentsFilter = {
-status:'absent'
+    const groups = await Group.find();
+
+    const groupStats = await Promise.all(
+      groups.map(async (item) => {
+        const students = await Student.find({
+          group: item._id,
+        });
+
+        const attendance = await Attendance.find({
+          group: item._id,
+
+          date: todayString,
+        });
+
+        const presentCount = attendance.filter(
+          (a) => a.status === "present",
+        ).length;
+
+        const absentCount = attendance.filter(
+          (a) => a.status === "absent",
+        ).length;
+
+        const unmarkedCount = students.length - attendance.length;
+
+        return {
+          groupName: item.name,
+
+          studentsCount: students.length,
+
+          presentCount,
+
+          absentCount,
+
+          unmarkedCount,
+        };
+      }),
+    );
+
+    const topAbsentRaw = await Attendance.aggregate([
+      {
+        $match: {
+          status: "absent",
+
+          date: dateFilter,
+        },
+      },
+
+      {
+        $group: {
+          _id: "$student",
+
+          absentCount: {
+            $sum: 1,
+          },
+        },
+      },
+
+      {
+        $sort: {
+          absentCount: -1,
+        },
+      },
+
+      {
+        $limit: 5,
+      },
+    ]);
+
+    const topAbsentStudents = [];
+
+    for (const item of topAbsentRaw) {
+      const student = await Student.findById(item._id);
+
+      if (student) {
+        topAbsentStudents.push({
+          fullName: student.fullName,
+
+          absentCount: item.absentCount,
+        });
+      }
+    }
+
+    res.json({
+      mode: "global",
+
+      totalStudents,
+
+      totalGroups,
+
+      totalAttendance,
+
+      presentCount,
+
+      absentCount,
+
+      attendancePercentage,
+
+      groupStats,
+
+      topAbsentStudents,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
 };
 
-if(
-group &&
-group !== 'all'
-){
-topStudentsFilter.group =
-new mongoose.Types.ObjectId(group);
-}
+const getGroupStats = async (req, res) => {
+  try {
+    const period = req.query.period || "today";
 
-if(fromDate){
+    const groupId = req.params.id;
 
-topStudentsFilter.date = {
-$gte:
-fromDate
-.toISOString()
-.split('T')[0]
+    const dateFilter = getDateFilter(period);
+
+    const attendanceFilter = {
+      group: new mongoose.Types.ObjectId(groupId),
+
+      date: dateFilter,
+    };
+
+    const group = await Group.findById(groupId);
+
+    const totalStudents = await Student.countDocuments({
+      group: groupId,
+    });
+
+    const totalAttendance = await Attendance.countDocuments(attendanceFilter);
+
+    const presentCount = await Attendance.countDocuments({
+      ...attendanceFilter,
+
+      status: "present",
+    });
+
+    const absentCount = await Attendance.countDocuments({
+      ...attendanceFilter,
+
+      status: "absent",
+    });
+
+    let attendancePercentage = 0;
+
+    if (totalAttendance > 0) {
+      attendancePercentage = Math.round((presentCount / totalAttendance) * 100);
+    }
+
+    const topAbsentRaw = await Attendance.aggregate([
+      {
+        $match: {
+          group: new mongoose.Types.ObjectId(groupId),
+
+          status: "absent",
+
+          date: dateFilter,
+        },
+      },
+
+      {
+        $group: {
+          _id: "$student",
+
+          absentCount: {
+            $sum: 1,
+          },
+        },
+      },
+
+      {
+        $sort: {
+          absentCount: -1,
+        },
+      },
+
+      {
+        $limit: 5,
+      },
+    ]);
+
+    const topAbsentStudents = [];
+
+    for (const item of topAbsentRaw) {
+      const student = await Student.findById(item._id);
+
+      if (student) {
+        topAbsentStudents.push({
+          fullName: student.fullName,
+
+          absentCount: item.absentCount,
+        });
+      }
+    }
+
+    res.json({
+      mode: "group",
+
+      groupName: group.name,
+
+      totalStudents,
+
+      totalAttendance,
+
+      presentCount,
+
+      absentCount,
+
+      attendancePercentage,
+
+      topAbsentStudents,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
 };
 
-}
+const getStudentStats = async (req, res) => {
+  try {
+    const period = req.query.period || "today";
 
-const topAbsentRaw =
-await Attendance.aggregate([
+    const studentId = req.params.id;
 
-{
-$match:topStudentsFilter
-},
+    const dateFilter = getDateFilter(period);
 
-{
-$group:{
-_id:'$student',
-absentCount:{
-$sum:1
-}
-}
-},
+    const attendanceFilter = {
+      student: new mongoose.Types.ObjectId(studentId),
 
-{
-$sort:{
-absentCount:-1
-}
-},
+      date: dateFilter,
+    };
 
-{
-$limit:5
-}
+    const student = await Student.findById(studentId).populate("group", "name");
 
-]);
+    const totalAttendance = await Attendance.countDocuments(attendanceFilter);
 
-for(const item of topAbsentRaw){
+    const presentCount = await Attendance.countDocuments({
+      ...attendanceFilter,
 
-const studentData =
-await Student.findById(item._id);
+      status: "present",
+    });
 
-if(studentData){
+    const absentCount = await Attendance.countDocuments({
+      ...attendanceFilter,
 
-topAbsentStudents.push({
+      status: "absent",
+    });
 
-fullName:
-studentData.fullName,
+    let attendancePercentage = 0;
 
-absentCount:
-item.absentCount
+    if (totalAttendance > 0) {
+      attendancePercentage = Math.round((presentCount / totalAttendance) * 100);
+    }
 
-});
+    const attendanceHistory = await Attendance.find(attendanceFilter).sort({
+      date: 1,
+    });
 
-}
+    res.json({
+      mode: "student",
 
-}
+      studentName: student.fullName,
 
-}
+      studentEmail: student.email,
 
-res.json({
+      groupName: student.group?.name,
 
-totalStudents,
-totalGroups,
-totalAttendance,
+      totalAttendance,
 
-presentCount,
-absentCount,
+      presentCount,
 
-todayPresent,
-todayAbsent,
+      absentCount,
 
-attendancePercentage,
+      attendancePercentage,
 
-groupStats,
-
-topAbsentStudents
-
-});
-
-}catch(error){
-
-res.status(500).json({
-message:error.message
-});
-
-}
-
+      attendanceHistory,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
 };
 
 module.exports = {
-getStats
+  getGlobalStats,
+
+  getGroupStats,
+
+  getStudentStats,
 };

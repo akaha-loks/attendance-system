@@ -1,13 +1,21 @@
-const express = require('express');
+const express = require("express");
 
 const router = express.Router();
 
-const protect = require('../middleware/authMiddleware');
+const protect = require("../middleware/authMiddleware");
 
 const {
-  getStats
-} = require('../controllers/statController');
+  getGlobalStats,
 
-router.get('/', protect, getStats);
+  getGroupStats,
+
+  getStudentStats,
+} = require("../controllers/statController");
+
+router.get("/global", protect, getGlobalStats);
+
+router.get("/group/:id", protect, getGroupStats);
+
+router.get("/student/:id", protect, getStudentStats);
 
 module.exports = router;

@@ -1,231 +1,134 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
-import API from '../api/axios';
+import API from "../api/axios";
 
 function LoginPage() {
+  const [email, setEmail] = useState("");
 
-  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState("");
 
-  const [password, setPassword] =
-    useState('');
+  const [errors, setErrors] = useState({});
 
-  const [errors, setErrors] =
-    useState({});
-
-  const [loading, setLoading] =
-    useState(false);
-
+  const [loading, setLoading] = useState(false);
 
   // VALIDATION
 
   const validateForm = () => {
-
     const newErrors = {};
 
     if (!email.trim()) {
-
-      newErrors.email =
-        'Введите email';
-
+      newErrors.email = "Введите email";
     } else {
-
-      const emailRegex =
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
       if (!emailRegex.test(email)) {
-
-        newErrors.email =
-          'Неверный формат email';
-
+        newErrors.email = "Неверный формат email";
       }
-
     }
 
     if (!password.trim()) {
-
-      newErrors.password =
-        'Введите пароль';
-
+      newErrors.password = "Введите пароль";
     }
 
     setErrors(newErrors);
 
     return Object.keys(newErrors).length === 0;
-
   };
-
 
   // LOGIN
 
   const handleLogin = async (e) => {
-
     e.preventDefault();
 
     if (!validateForm()) return;
 
     try {
-
       setLoading(true);
 
-      const { data } = await API.post(
-        '/auth/login',
-        {
-          email,
-          password
-        }
-      );
-
-      localStorage.setItem(
-        'token',
-        data.token
-      );
-
-      localStorage.setItem(
-        'user',
-        JSON.stringify(data.user)
-      );
-
-      window.location.href =
-        '/dashboard';
-
-    } catch (error) {
-
-      console.log(
-        error.response?.data
-      );
-
-      setErrors({
-        server:
-          'Неверный email или пароль'
+      const { data } = await API.post("/auth/login", {
+        email,
+        password,
       });
 
+      localStorage.setItem("token", data.token);
+
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      window.location.href = "/dashboard";
+    } catch (error) {
+      console.log(error.response?.data);
+
+      setErrors({
+        server: "Неверный email или пароль",
+      });
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
-
   return (
-
     <div className="login-page">
-
       <div className="login-card">
+        <h1>Вход</h1>
 
-        <h1>
-          Вход
-        </h1>
-
-        <form
-          onSubmit={handleLogin}
-          className="login-form"
-        >
-
+        <form onSubmit={handleLogin} className="login-form">
           <div className="form-group">
-
             <input
               type="email"
               placeholder="Email"
               value={email}
               onChange={(e) => {
-
                 setEmail(e.target.value);
 
                 setErrors((prev) => ({
                   ...prev,
-                  email: '',
-                  server: ''
+                  email: "",
+                  server: "",
                 }));
-
               }}
             />
 
-            {
-              errors.email && (
-                <span className="error-text">
-                  {errors.email}
-                </span>
-              )
-            }
-
+            {errors.email && <span className="error-text">{errors.email}</span>}
           </div>
 
           <div className="form-group">
-
             <input
               type="password"
               placeholder="Пароль"
               value={password}
               onChange={(e) => {
-
                 setPassword(e.target.value);
 
                 setErrors((prev) => ({
                   ...prev,
-                  password: '',
-                  server: ''
+                  password: "",
+                  server: "",
                 }));
-
               }}
             />
 
-            {
-              errors.password && (
-                <span className="error-text">
-                  {errors.password}
-                </span>
-              )
-            }
-
+            {errors.password && (
+              <span className="error-text">{errors.password}</span>
+            )}
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-          >
-
-            {
-              loading
-                ? 'Вход...'
-                : 'Войти'
-            }
-
+          <button type="submit" disabled={loading}>
+            {loading ? "Вход..." : "Войти"}
           </button>
-
         </form>
 
-        {
-          errors.server && (
-            <p className="server-error">
-              {errors.server}
-            </p>
-          )
-        }
+        {errors.server && <p className="server-error">{errors.server}</p>}
 
         <br />
 
         <p>
-
-          Нет аккаунта?
-
-          {' '}
-
-          <Link to="/register">
-            Зарегистрироваться
-          </Link>
-
+          Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
         </p>
-
       </div>
-
     </div>
-
   );
-
 }
 
 export default LoginPage;

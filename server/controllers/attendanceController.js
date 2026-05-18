@@ -15,6 +15,7 @@ status
 const existingAttendance =
 await Attendance.findOne({
 student,
+group,
 date
 });
 

@@ -1,608 +1,417 @@
-import { useEffect, useState } from 'react';
-import API from '../api/axios';
-import Layout from '../components/Layout';
+// AttendancePage.jsx
+
+import { useEffect, useState } from "react";
+
+import API from "../api/axios";
+
+import Layout from "../components/Layout";
 
 function AttendancePage() {
+  const [groups, setGroups] = useState([]);
 
-const [groups,setGroups]=useState([]);
-const [students,setStudents]=useState([]);
-const [selectedGroup,setSelectedGroup]=useState('');
+  const [students, setStudents] = useState([]);
 
-const [date,setDate]=useState(
-new Date().toISOString().split('T')[0]
-);
+  const [selectedGroup, setSelectedGroup] = useState("");
 
-const [search,setSearch]=useState('');
-const [attendanceData,setAttendanceData]=useState({});
+  const getToday = () => {
+    const date = new Date();
 
-const [reportStudent,setReportStudent]=useState('');
-const [reportFrom,setReportFrom]=useState('');
-const [reportTo,setReportTo]=useState('');
-const [reportData,setReportData]=useState([]);
+    const year = date.getFullYear();
 
-const fetchGroups=async()=>{
+    const month = String(date.getMonth() + 1).padStart(2, "0");
 
-try{
+    const day = String(date.getDate()).padStart(2, "0");
 
-const {data}=await API.get('/groups');
-setGroups(data);
+    return `${year}-${month}-${day}`;
+  };
 
-}catch(error){
+  const [date, setDate] = useState(getToday());
 
-console.log(error);
+  const [search, setSearch] = useState("");
 
-}
+  const [attendanceData, setAttendanceData] = useState({});
 
-};
+  const [reportStudent, setReportStudent] = useState("");
 
-const fetchStudents=async()=>{
+  const [reportFrom, setReportFrom] = useState("");
 
-if(!selectedGroup)return;
+  const [reportTo, setReportTo] = useState("");
 
-try{
+  const [reportData, setReportData] = useState([]);
 
-const {data}=await API.get(
-`/students?group=${selectedGroup}`
-);
+  const fetchGroups = async () => {
+    try {
+      const { data } = await API.get("/groups");
 
-setStudents(data);
+      setGroups(data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-}catch(error){
+  const fetchStudents = async () => {
+    if (!selectedGroup) {
+      setStudents([]);
 
-console.log(error);
+      return;
+    }
 
-}
+    try {
+      const { data } = await API.get(`/students?group=${selectedGroup}`);
 
-};
+      setStudents(data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-const loadAttendance=async()=>{
+  const loadAttendance = async () => {
+    if (!selectedGroup || !date) {
+      setAttendanceData({});
 
-if(!selectedGroup||!date)return;
+      return;
+    }
 
-try{
+    try {
+      const { data } = await API.get(
+        `/attendance?group=${selectedGroup}&date=${date}`,
+      );
 
-const {data}=await API.get(
-`/attendance?group=${selectedGroup}&date=${date}`
-);
+      const attendanceMap = {};
 
-const attendanceMap={};
+      data.forEach((item) => {
+        if (item.student?._id) {
+          attendanceMap[item.student._id] = item.status;
+        }
+      });
 
-data.forEach((item)=>{
+      setAttendanceData(attendanceMap);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-attendanceMap[item.student?._id]=
-item.status;
+  const handleStatusChange = async (studentId, status) => {
+    if (!selectedGroup || !date) return;
 
-});
+    try {
+      setAttendanceData((prev) => ({
+        ...prev,
 
-setAttendanceData(attendanceMap);
+        [studentId]: status,
+      }));
 
-}catch(error){
+      await API.post("/attendance", {
+        student: studentId,
 
-console.log(error);
+        group: selectedGroup,
 
-}
+        date,
 
-};
+        status,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-const handleStatusChange=async(
-studentId,
-status
-)=>{
+  const loadStudentReport = async () => {
+    if (!reportStudent || !reportFrom || !reportTo) return;
 
-if(!selectedGroup||!date)return;
+    try {
+      const { data } = await API.get(
+        `/attendance/student-report?student=${reportStudent}&from=${reportFrom}&to=${reportTo}`,
+      );
 
-try{
+      setReportData(data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-setAttendanceData((prev)=>({
-...prev,
-[studentId]:status
-}));
+  const exportAttendanceReport = () => {
+    if (!selectedGroup) return;
 
-await API.post('/attendance',{
-student:studentId,
-group:selectedGroup,
-date,
-status
-});
+    const selectedGroupData = groups.find(
+      (group) => group._id === selectedGroup,
+    );
 
-}catch(error){
+    const csvRows = [["Студент", "Email", "Статус", "Дата"]];
 
-console.log(error);
+    filteredStudents.forEach((student) => {
+      const status =
+        attendanceData[student._id] === "absent"
+          ? "Отсутствует"
+          : attendanceData[student._id] === "present"
+            ? "Присутствует"
+            : "Не отмечен";
 
-}
+      csvRows.push([student.fullName, student.email, status, date]);
+    });
 
-};
+    const csvContent = csvRows.map((row) => row.join("; ")).join("\n");
 
-const loadStudentReport=async()=>{
+    const blob = new Blob(["\uFEFF" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
 
-if(
-!reportStudent||
-!reportFrom||
-!reportTo
-)return;
+    const link = document.createElement("a");
 
-try{
+    const url = URL.createObjectURL(blob);
 
-const {data}=await API.get(
-`/attendance/student-report?student=${reportStudent}&from=${reportFrom}&to=${reportTo}`
-);
+    link.setAttribute("href", url);
 
-setReportData(data);
+    link.setAttribute(
+      "download",
+      `attendance-${selectedGroupData?.name || "group"}-${date}.csv`,
+    );
 
-}catch(error){
+    document.body.appendChild(link);
 
-console.log(error);
+    link.click();
 
-}
+    document.body.removeChild(link);
+  };
 
-};
+  const exportStudentReport = () => {
+    if (reportData.length === 0) return;
 
-const exportAttendanceReport=()=>{
+    const studentData = students.find(
+      (student) => student._id === reportStudent,
+    );
 
-if(!selectedGroup)return;
+    const csvRows = [["Дата", "Статус"]];
 
-const selectedGroupData=
-groups.find(
-(group)=>group._id===selectedGroup
-);
+    reportData.forEach((item) => {
+      csvRows.push([
+        item.date,
 
-const csvRows=[[
-'Студент',
-'Email',
-'Статус',
-'Дата'
-]];
+        item.status === "absent" ? "Отсутствует" : "Присутствует",
+      ]);
+    });
 
-filteredStudents.forEach((student)=>{
+    const csvContent = csvRows.map((row) => row.join("; ")).join("\n");
 
-const status=
-attendanceData[student._id]==='absent'
-?'Отсутствует'
-:attendanceData[student._id]==='present'
-?'Присутствует'
-:'Не отмечен';
+    const blob = new Blob(["\uFEFF" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
 
-csvRows.push([
-student.fullName,
-student.email,
-status,
-date
-]);
+    const link = document.createElement("a");
 
-});
+    const url = URL.createObjectURL(blob);
 
-const csvContent=
-csvRows
-.map((row)=>row.join('; '))
-.join('\n');
+    link.setAttribute("href", url);
 
-const blob=new Blob(
-['\uFEFF'+csvContent],
-{
-type:'text/csv;charset=utf-8;'
-}
-);
+    link.setAttribute(
+      "download",
+      `student-report-${studentData?.fullName || "student"}.csv`,
+    );
 
-const link=document.createElement('a');
-const url=URL.createObjectURL(blob);
+    document.body.appendChild(link);
 
-link.setAttribute('href',url);
+    link.click();
 
-link.setAttribute(
-'download',
-`attendance-${
-selectedGroupData?.name||'group'
-}-${date}.csv`
-);
+    document.body.removeChild(link);
+  };
 
-document.body.appendChild(link);
+  useEffect(() => {
+    fetchGroups();
+  }, []);
 
-link.click();
+  useEffect(() => {
+    fetchStudents();
+  }, [selectedGroup]);
 
-document.body.removeChild(link);
+  useEffect(() => {
+    loadAttendance();
+  }, [selectedGroup, date]);
 
-};
+  const filteredStudents = students.filter((student) => {
+    const searchValue = search.toLowerCase();
 
-const exportStudentReport=()=>{
+    return (
+      student.fullName.toLowerCase().includes(searchValue) ||
+      student.email.toLowerCase().includes(searchValue)
+    );
+  });
 
-if(reportData.length===0)return;
+  const presentCount = students.filter(
+    (student) => attendanceData[student._id] === "present",
+  ).length;
 
-const studentData=
-students.find(
-(student)=>student._id===reportStudent
-);
+  const absentCount = students.filter(
+    (student) => attendanceData[student._id] === "absent",
+  ).length;
 
-const csvRows=[[
-'Дата',
-'Статус'
-]];
+  return (
+    <Layout>
+      <h1>Посещаемость</h1>
 
-reportData.forEach((item)=>{
+      <br />
 
-csvRows.push([
-` ${item.date}`,
-item.status==='absent'
-?'Отсутствует'
-:'Присутствует'
-]);
+      <div className="attendance-controls">
+        <select
+          value={selectedGroup}
+          onChange={(e) => {
+            setAttendanceData({});
 
-});
+            setSelectedGroup(e.target.value);
+          }}
+        >
+          <option value="">Выберите группу</option>
 
-const csvContent=
-csvRows
-.map((row)=>row.join('; '))
-.join('\n');
+          {groups.map((group) => (
+            <option key={group._id} value={group._id}>
+              {group.name}
+            </option>
+          ))}
+        </select>
 
-const blob=new Blob(
-['\uFEFF'+csvContent],
-{
-type:'text/csv;charset=utf-8;'
-}
-);
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => {
+            setAttendanceData({});
 
-const link=document.createElement('a');
-const url=URL.createObjectURL(blob);
+            setDate(e.target.value);
+          }}
+        />
+      </div>
 
-link.setAttribute('href',url);
+      <br />
 
-link.setAttribute(
-'download',
-`student-report-${
-studentData?.fullName||'student'
-}.csv`
-);
+      <input
+        type="text"
+        placeholder="Поиск по имени или email"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
 
-document.body.appendChild(link);
+      <br />
+      <br />
 
-link.click();
+      <div className="attendance-summary">
+        <div className="summary-present">🟢 Присутствуют: {presentCount}</div>
 
-document.body.removeChild(link);
+        <div className="summary-absent">🔴 Отсутствуют: {absentCount}</div>
+      </div>
 
-};
+      <br />
 
-useEffect(()=>{
+      <button onClick={exportAttendanceReport}>Скачать отчёт CSV</button>
 
-fetchGroups();
+      <br />
+      <br />
 
-},[]);
+      <h2>Отчёт по студенту</h2>
 
-useEffect(()=>{
+      <br />
 
-fetchStudents();
-
-},[selectedGroup]);
-
-useEffect(()=>{
-
-if(students.length>0){
-
-loadAttendance();
-
-}
-
-},[selectedGroup,date,students]);
-
-const filteredStudents=
-students.filter((student)=>{
-
-const searchValue=
-search.toLowerCase();
-
-return(
-
-student.fullName
-.toLowerCase()
-.includes(searchValue)
-
-||
-
-student.email
-.toLowerCase()
-.includes(searchValue)
-
-);
-
-});
-
-const presentCount=
-Object.values(attendanceData)
-.filter(
-(status)=>status==='present'
-).length;
-
-const absentCount=
-Object.values(attendanceData)
-.filter(
-(status)=>status==='absent'
-).length;
-
-return(
-
-<Layout>
-
-<h1>Посещаемость</h1>
-
-<br/>
-
-<div className="attendance-controls">
-
-<select
-value={selectedGroup}
-onChange={(e)=>
-setSelectedGroup(e.target.value)
-}
->
-
-<option value="">
-Выберите группу
-</option>
-
-{
-groups.map((group)=>(
-
-<option
-key={group._id}
-value={group._id}
->
-{group.name}
-</option>
-
-))
-}
-
-</select>
-
-<input
-type="date"
-value={date}
-onChange={(e)=>
-setDate(e.target.value)
-}
-/>
-
-</div>
-
-<br/>
-
-<input
-type="text"
-placeholder="Поиск по имени или email"
-value={search}
-onChange={(e)=>
-setSearch(e.target.value)
-}
-/>
-
-<br/><br/>
-
-<div className="attendance-summary">
-
-<div className="summary-present">
-🟢 Присутствуют: {presentCount}
-</div>
-
-<div className="summary-absent">
-🔴 Отсутствуют: {absentCount}
-</div>
-
-</div>
-
-<br/>
-
-<button
-onClick={exportAttendanceReport}
->
-Скачать отчёт CSV
-</button>
-
-<br/><br/>
-
-<h2>Отчёт по студенту</h2>
-
-<br/>
-
-<div className="attendance-controls">
-
-<select
-value={reportStudent}
-onChange={(e)=>
-setReportStudent(e.target.value)
-}
->
-
-<option value="">
-Выберите студента
-</option>
-
-{
-students.map((student)=>(
-
-<option
-key={student._id}
-value={student._id}
->
-{student.fullName}
-</option>
-
-))
-}
-
-</select>
-
-<input
-type="date"
-value={reportFrom}
-onChange={(e)=>
-setReportFrom(e.target.value)
-}/>
-
-<input
-type="date"
-value={reportTo}
-onChange={(e)=>
-setReportTo(e.target.value)
-}/>
-
-<button
-onClick={loadStudentReport}
->
-Загрузить
-</button>
-
-</div>
-
-<br/>
-
-{
-reportData.length>0&&(
-
-<>
-
-<button
-onClick={exportStudentReport}
->
-Скачать CSV студента
-</button>
-
-<br/><br/>
-
-{
-reportData.map((item)=>(
-
-<div
-key={item._id}
-className="card"
->
-
-<div>
-
-<h3>
-{item.student?.fullName}
-</h3>
-
-<p>
-{item.date}
-</p>
-
-</div>
-
-<div
-className={`attendance-status ${
-item.status==='absent'
-?'absent'
-:'present'
-}`}
->
-
-{
-item.status==='absent'
-?'🔴 Отсутствует'
-:'🟢 Присутствует'
-}
-
-</div>
-
-</div>
-
-))
-}
-
-</>
-
-)
-}
-
-<br/><br/>
-
-{
-students.length===0&&
-selectedGroup&&(
-
-<p>
-В группе нет студентов
-</p>
-
-)
-}
-
-{
-filteredStudents.length===0&&
-students.length>0&&(
-
-<p>
-Студенты не найдены
-</p>
-
-)
-}
-
-{
-reportData.length===0&&
-
-filteredStudents.map((student)=>(
-
-<div
-key={student._id}
-className="card"
->
-
-<div>
-
-<h3>
-{student.fullName}
-</h3>
-
-<p>
-{student.email}
-</p>
-
-</div>
-
-<div
-className={`attendance-status ${
-attendanceData[student._id]==='absent'
-?'absent'
-:attendanceData[student._id]==='present'
-?'present'
-:''
-}`}
-onClick={()=>{
-
-const currentStatus=
-attendanceData[student._id];
-
-const newStatus=
-currentStatus==='present'
-?'absent'
-:'present';
-
-handleStatusChange(
-student._id,
-newStatus
-);
-
-}}
->
-
-{
-attendanceData[student._id]==='absent'
-?'🔴 Отсутствует'
-:attendanceData[student._id]==='present'
-?'🟢 Присутствует'
-:'⚪ Не отмечен'
-}
-
-</div>
-
-</div>
-
-))
-}
-
-</Layout>
-
-);
-
+      <div className="attendance-controls">
+        <select
+          value={reportStudent}
+          onChange={(e) => setReportStudent(e.target.value)}
+        >
+          <option value="">Выберите студента</option>
+
+          {students.map((student) => (
+            <option key={student._id} value={student._id}>
+              {student.fullName}
+            </option>
+          ))}
+        </select>
+
+        <input
+          type="date"
+          value={reportFrom}
+          onChange={(e) => setReportFrom(e.target.value)}
+        />
+
+        <input
+          type="date"
+          value={reportTo}
+          onChange={(e) => setReportTo(e.target.value)}
+        />
+
+        <button onClick={loadStudentReport}>Загрузить</button>
+      </div>
+
+      <br />
+
+      {reportData.length > 0 && (
+        <>
+          <button onClick={exportStudentReport}>Скачать CSV студента</button>
+
+          <br />
+          <br />
+
+          {reportData.map((item) => (
+            <div key={item._id} className="card">
+              <div>
+                <h3>{item.student?.fullName}</h3>
+
+                <p>{item.date}</p>
+              </div>
+
+              <div
+                className={`attendance-status ${
+                  item.status === "absent" ? "absent" : "present"
+                }`}
+              >
+                {item.status === "absent"
+                  ? "🔴 Отсутствует"
+                  : "🟢 Присутствует"}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      <br />
+      <br />
+
+      {students.length === 0 && selectedGroup && <p>В группе нет студентов</p>}
+
+      {filteredStudents.length === 0 && students.length > 0 && (
+        <p>Студенты не найдены</p>
+      )}
+
+      {reportData.length === 0 &&
+        filteredStudents.map((student) => (
+          <div key={student._id} className="card">
+            <div>
+              <h3>{student.fullName}</h3>
+
+              <p>{student.email}</p>
+            </div>
+
+            <div
+              className={`attendance-status ${
+                attendanceData[student._id] === "absent"
+                  ? "absent"
+                  : attendanceData[student._id] === "present"
+                    ? "present"
+                    : ""
+              }`}
+              onClick={() => {
+                const currentStatus = attendanceData[student._id];
+
+                const newStatus =
+                  currentStatus === "present" ? "absent" : "present";
+
+                handleStatusChange(student._id, newStatus);
+              }}
+            >
+              {attendanceData[student._id] === "absent"
+                ? "🔴 Отсутствует"
+                : attendanceData[student._id] === "present"
+                  ? "🟢 Присутствует"
+                  : "⚪ Не отмечен"}
+            </div>
+          </div>
+        ))}
+    </Layout>
+  );
 }
 
 export default AttendancePage;
