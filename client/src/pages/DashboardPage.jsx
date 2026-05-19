@@ -178,7 +178,7 @@ function DashboardPage() {
         </div>
 
         <div className="stats-grid">
-          {stats.mode === "student" ? (
+          {stats.mode === "student" && (
             <div className="stat-card">
               <div className="student-info">
                 <div className="student-name">{stats.studentName}</div>
@@ -187,12 +187,6 @@ function DashboardPage() {
 
                 <div className="student-group">{stats.groupName}</div>
               </div>
-            </div>
-          ) : (
-            <div className="stat-card">
-              <div className="stat-value">{stats.totalAttendance}</div>
-
-              <div className="stat-label">Всего посещений</div>
             </div>
           )}
 
@@ -309,7 +303,7 @@ function DashboardPage() {
 
                 <YAxis domain={[0, 100]} />
 
-                <Tooltip />
+                <Tooltip formatter={(value) => [`${value}%`, "Посещаемость"]} />
 
                 <Bar
                   dataKey="percentage"
@@ -333,7 +327,12 @@ function DashboardPage() {
 
                 <YAxis domain={[0, 100]} />
 
-                <Tooltip />
+                <Tooltip
+                  formatter={(value) => [
+                    value === 100 ? "Присутствовал" : "Отсутствовал",
+                    "Статус",
+                  ]}
+                />
 
                 <Line
                   type="monotone"

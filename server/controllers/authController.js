@@ -28,6 +28,8 @@ const registerUser = async (req, res) => {
       user,
     });
   } catch (error) {
+    console.log(error);
+
     res.status(500).json({
       message: error.message,
     });
