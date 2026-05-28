@@ -19,7 +19,7 @@ const createGroup = async (req, res) => {
     const group = await Group.create({
       name,
 
-      createdBy: req.user.id,
+      teacher: req.user.id,
     });
 
     res.status(201).json(group);
@@ -32,7 +32,11 @@ const createGroup = async (req, res) => {
 
 const getGroups = async (req, res) => {
   try {
-    const groups = await Group.find().sort({ createdAt: -1 });
+    const groups = await Group.find({
+      teacher: req.user.id,
+    }).sort({
+      createdAt: -1,
+    });
 
     res.json(groups);
   } catch (error) {
@@ -46,7 +50,11 @@ const updateGroup = async (req, res) => {
   try {
     const { name } = req.body;
 
-    const group = await Group.findById(req.params.id);
+    const group = await Group.findOne({
+      _id: req.params.id,
+
+      teacher: req.user.id,
+    });
 
     if (!group) {
       return res.status(404).json({
@@ -76,7 +84,11 @@ const updateGroup = async (req, res) => {
 
 const deleteGroup = async (req, res) => {
   try {
-    const group = await Group.findById(req.params.id);
+    const group = await Group.findOne({
+      _id: req.params.id,
+
+      teacher: req.user.id,
+    });
 
     if (!group) {
       return res.status(404).json({

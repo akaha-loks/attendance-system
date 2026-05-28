@@ -19,7 +19,10 @@ const userSchema = new mongoose.Schema({
 
   role: {
     type: String,
-    default: "teacher",
+
+    enum: ["pending", "teacher", "admin", "inactive"],
+
+    default: "pending",
   },
 });
 

@@ -8,11 +8,15 @@ const groupSchema = new mongoose.Schema(
       unique: true,
     },
 
-    createdBy: {
+    teacher: {
       type: mongoose.Schema.Types.ObjectId,
+
       ref: "User",
+
+      required: true,
     },
   },
+
   {
     timestamps: true,
   },

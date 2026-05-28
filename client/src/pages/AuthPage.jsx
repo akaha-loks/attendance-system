@@ -92,13 +92,19 @@ function AuthPage() {
         setErrors({
           server: "Пользователь уже существует",
         });
+      } else if (message === "Аккаунт ожидает подтверждения администратора") {
+        setErrors({
+          server: "Аккаунт ожидает подтверждения администратора",
+        });
+      } else if (message === "Аккаунт деактивирован") {
+        setErrors({
+          server: "Аккаунт деактивирован",
+        });
       } else {
         setErrors({
           server: isLogin ? "Неверный email или пароль" : "Ошибка регистрации",
         });
       }
-    } finally {
-      setLoading(false);
     }
   };
 

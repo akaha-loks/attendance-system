@@ -1,6 +1,8 @@
 const jwt = require("jsonwebtoken");
 
-const protect = (req, res, next) => {
+const User = require("../models/User");
+
+const protect = async (req, res, next) => {
   let token;
 
   if (
@@ -10,9 +12,27 @@ const protect = (req, res, next) => {
     try {
       token = req.headers.authorization.split(" ")[1];
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(
+        token,
 
-      req.user = decoded;
+        process.env.JWT_SECRET,
+      );
+
+      const user = await User.findById(decoded.id).select("-password");
+
+      if (!user) {
+        return res.status(401).json({
+          message: "Пользователь не найден",
+        });
+      }
+
+      if (user.role === "inactive") {
+        return res.status(403).json({
+          message: "Аккаунт деактивирован",
+        });
+      }
+
+      req.user = user;
 
       next();
     } catch (error) {
@@ -29,4 +49,18 @@ const protect = (req, res, next) => {
   }
 };
 
-module.exports = protect;
+const adminOnly = (req, res, next) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({
+      message: "Только для администратора",
+    });
+  }
+
+  next();
+};
+
+module.exports = {
+  protect,
+
+  adminOnly,
+};

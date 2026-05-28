@@ -51,13 +51,27 @@ const getGlobalStats = async (req, res) => {
 
     const attendanceFilter = {};
 
+    const groups = await Group.find({
+      teacher: req.user.id,
+    });
+
+    const groupIds = groups.map((group) => group._id);
+
+    attendanceFilter.group = {
+      $in: groupIds,
+    };
+
     if (period) {
       attendanceFilter.date = dateFilter;
     }
 
-    const totalStudents = await Student.countDocuments();
+    const totalStudents = await Student.countDocuments({
+      group: {
+        $in: groupIds,
+      },
+    });
 
-    const totalGroups = await Group.countDocuments();
+    const totalGroups = groups.length;
 
     const totalAttendance = await Attendance.countDocuments(attendanceFilter);
 
@@ -80,8 +94,6 @@ const getGlobalStats = async (req, res) => {
     }
 
     const todayString = formatDate(new Date());
-
-    const groups = await Group.find();
 
     const groupStats = await Promise.all(
       groups.map(async (item) => {
@@ -203,7 +215,17 @@ const getGroupStats = async (req, res) => {
       date: dateFilter,
     };
 
-    const group = await Group.findById(groupId);
+    const group = await Group.findOne({
+      _id: groupId,
+
+      teacher: req.user.id,
+    });
+
+    if (!group) {
+      return res.status(403).json({
+        message: "Нет доступа к группе",
+      });
+    }
 
     const totalStudents = await Student.countDocuments({
       group: groupId,
@@ -313,7 +335,16 @@ const getStudentStats = async (req, res) => {
       date: dateFilter,
     };
 
-    const student = await Student.findById(studentId).populate("group", "name");
+    const student = await Student.findById(studentId).populate(
+      "group",
+      "name teacher",
+    );
+
+    if (!student || student.group?.teacher?.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "Нет доступа к студенту",
+      });
+    }
 
     const totalAttendance = await Attendance.countDocuments(attendanceFilter);
 
