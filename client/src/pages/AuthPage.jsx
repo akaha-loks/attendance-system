@@ -82,7 +82,7 @@ function AuthPage() {
         setPassword("");
 
         setErrors({
-          success: "Аккаунт успешно создан",
+          success: "Аккаунт создан и ожидает подтверждения администратора",
         });
       }
     } catch (error) {
@@ -90,7 +90,7 @@ function AuthPage() {
 
       if (message === "User already exists") {
         setErrors({
-          server: "Пользователь уже существует",
+          server: "Пользователь с таким email уже существует",
         });
       } else if (message === "Аккаунт ожидает подтверждения администратора") {
         setErrors({
@@ -105,6 +105,8 @@ function AuthPage() {
           server: isLogin ? "Неверный email или пароль" : "Ошибка регистрации",
         });
       }
+    } finally {
+      setLoading(false);
     }
   };
 
